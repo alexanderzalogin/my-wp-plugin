@@ -77,16 +77,16 @@ class myWpPlugin
             <p class="row justify-content-center">Please fill the below form</p>
             <form id="my-wp-plugin_form">
                 <div class="form-group mb-2">
-                    <input type="text" class="form-control" placeholder="Name">
+                    <input type="text" name="name" class="form-control" placeholder="Name">
                 </div>
                 <div class="form-group mb-2">
-                    <input type="email" class="form-control" placeholder="Email">
+                    <input type="email" name="email" class="form-control" placeholder="Email">
                 </div>
                 <div class="form-group mb-2">
-                    <input type="tel" class="form-control" placeholder="Phone">
+                    <input type="tel" name="name"phone class="form-control" placeholder="Phone">
                 </div>
                 <div class="form-group mb-2">
-                    <textarea class="form-control" placeholder="Your message"></textarea>
+                    <textarea name="message" class="form-control" placeholder="Your message"></textarea>
                 </div>
                 <button class="btn btn-success btn-block">Send message</button>
             </form>
@@ -97,13 +97,15 @@ class myWpPlugin
     {
         ?>
         <script>
-            (function ($) {
+            let $ = jQuery.noConflict();
+            jQuery(document).ready(function ($) {
                 let nonce = '<?=wp_create_nonce('wp_rest');?>'
 
                 $('#my-wp-plugin_form').submit(function (event) {
                     event.preventDefault();
                     let form = $(this).serialize();
                     console.log(form)
+
                     $.ajax({
                         method: 'post',
                         url: '<?=get_rest_url(null, 'my-wp-plugin/v1/send-email');?>',
@@ -111,7 +113,7 @@ class myWpPlugin
                         data: form
                     })
                 })
-            })(jQuery)
+            });
         </script>
     <?php }
 
