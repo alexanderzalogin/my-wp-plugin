@@ -69,11 +69,11 @@ class myWpPlugin
         );
     }
 
-    public function loadShortcode()
+    public function loadShortcode(): void
     {
         ?>
         <div class="my-wp-plugin col-lg-4 col-md-4 col-sm-4 container justify-content-center">
-            <h1 class="row justify-content-center">Send us an email</h1>
+            <h1 class="row justify-content-center">Send us your feedback</h1>
             <p class="row justify-content-center">Please fill the below form</p>
             <form id="my-wp-plugin_form">
                 <div class="form-group mb-2">
@@ -83,7 +83,7 @@ class myWpPlugin
                     <input type="email" name="email" class="form-control" placeholder="Email">
                 </div>
                 <div class="form-group mb-2">
-                    <input type="tel" name="name"phone class="form-control" placeholder="Phone">
+                    <input type="tel" name="phone" class="form-control" placeholder="Phone">
                 </div>
                 <div class="form-group mb-2">
                     <textarea name="message" class="form-control" placeholder="Your message"></textarea>
@@ -93,22 +93,23 @@ class myWpPlugin
         </div>
     <?php }
 
-    public function loadScripts()
+    public function loadScripts(): void
     {
         ?>
         <script>
             let $ = jQuery.noConflict();
             jQuery(document).ready(function ($) {
-                let nonce = '<?=wp_create_nonce('wp_rest');?>'
+
 
                 $('#my-wp-plugin_form').submit(function (event) {
                     event.preventDefault();
+                    // security token to protect URLs and forms from malicious attacks
+                    let nonce = '<?php echo wp_create_nonce('wp_rest');?>';
                     let form = $(this).serialize();
-                    console.log(form)
 
                     $.ajax({
                         method: 'post',
-                        url: '<?=get_rest_url(null, 'my-wp-plugin/v1/send-email');?>',
+                        url: '<?php echo get_rest_url(null, 'my-wp-plugin/v1/send-email');?>',
                         headers: {'X-WP-Nonce': nonce},
                         data: form
                     })
@@ -117,7 +118,7 @@ class myWpPlugin
         </script>
     <?php }
 
-    public function registerRestApi()
+    public function registerRestApi(): void
     {
         register_rest_route('my-wp-plugin/v1', 'send-email', array(
             'methods' => 'POST',
@@ -127,7 +128,23 @@ class myWpPlugin
 
     public function handleMyWpPluginForm($data)
     {
-        echo 'This is the endpoint';
+        $headers = $data->get_headers();
+        $params = $data->get_params();
+        $nonce = $headers['x_wp_nonce'][0];
+
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_REST_Response('Message not sent', 422);
+        }
+
+        $post_id = wp_insert_post([
+            'post_type' => 'my_wp_plugin',
+            'post_title' => 'New message',
+            'post_status' => 'publish'
+        ]);
+
+        if ($post_id) {
+            return new WP_REST_Response('Thanks for the feedback!', 200);
+        }
     }
 }
 
